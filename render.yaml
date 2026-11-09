@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: variable-vault
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: .
