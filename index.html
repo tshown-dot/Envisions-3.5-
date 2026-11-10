@@ -559,6 +559,7 @@ const $=s=>document.querySelector(s);
 const app=$('#app');
 const S={muted:store.get('vv_muted',false)};
 window.__vv=S; // handy for debugging in the browser console
+try{localStorage.removeItem('vv_name');}catch(e){} // no student identifiers are kept
 
 /* ---------------- Sound ---------------- */
 let AC=null;
@@ -643,7 +644,7 @@ function elapsed(){return Math.floor((Date.now()-S.t0)/1000);}
 /* ================= TITLE ================= */
 function showTitle(){
   clearInterval(S.timer);
-  const best=store.get('vv_best',0), name=store.get('vv_name','');
+  const best=store.get('vv_best',0);
   app.innerHTML=`<div class="screen center">
     <div class="lesson-tag">enVision 2.0 · Topic 3 · Lesson 3-5 · Evaluate Algebraic Expressions</div>
     <div class="title-door" style="margin-top:1rem">${doorSVG()}</div>
@@ -655,19 +656,16 @@ function showTitle(){
       <div class="card"><span class="n">3</span><b>Crack the code</b><small>Evaluate using the order of operations and enter the code.</small></div>
     </div>
     <div class="start-row">
-      <input id="cn" maxlength="18" placeholder="Agent codename (your first name)" value="${esc(name)}" aria-label="Agent codename">
       <select id="sv" aria-label="Starting vault">${VAULTS.map((v,i)=>`<option value="${i}">Start: Vault ${i+1}</option>`).join('')}</select>
       <button class="btn" id="go">START THE HEIST ▶</button>
     </div>
     <div class="best">${best?`Best loot on this device: <b style="color:var(--gold)">${money(best)}</b>`:'5 vaults · 15 locks · about 10 minutes'}</div>
   </div>`;
-  $('#go').onclick=()=>{ac();startGame($('#cn').value.trim()||'Agent X',+$('#sv').value);};
-  $('#cn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#go').click();});
+  $('#go').onclick=()=>{ac();startGame(+$('#sv').value);};
 }
 
-function startGame(name,startVault){
-  store.set('vv_name',name);
-  Object.assign(S,{name,start:startVault,vault:startVault,score:0,streak:0,bestStreak:0,subs:0,correct:0,
+function startGame(startVault){
+  Object.assign(S,{start:startVault,vault:startVault,score:0,streak:0,bestStreak:0,subs:0,correct:0,
     mistakes:{concat:0,impadd:0,pow:0,ltr:0,other:0},vstats:VAULTS.map(()=>({res:[],loot:0})),t0:Date.now()});
   clearInterval(S.timer);
   S.timer=setInterval(()=>{const el=$('#clock');if(el)el.textContent='⏱ '+clock(elapsed());},1000);
@@ -767,7 +765,7 @@ function renderPlay(){
   updateExpr(); updateLCD();
   const multi=p.slotVars.length>p.varOrder.length;
   crew(S.replacement?'Backup lock, same type. You\'ve got this. Substitute first, then evaluate step by step.'
-    :S.lockIdx===0&&S.vault===S.start?`Welcome, <b>${esc(S.name)}</b>. Drag the intel cards onto the matching variables in the lock. That's how you <b>substitute</b>.`
+    :S.lockIdx===0&&S.vault===S.start?`Welcome, agent. Drag the intel cards onto the matching variables in the lock. That's how you <b>substitute</b>.`
     :multi?'Watch out: a variable shows up <b>more than once</b> here. Every copy needs a value.'
     :pick(['New lock. Intel is in. Substitute, then evaluate.','Plug in the values first. Calculate second.','Remember: a number touching a variable means multiply.','Every variable slot needs its value before the keypad wakes up.']));
 }
@@ -943,7 +941,7 @@ function showReport(){
     <div class="report card">
       <div class="kicker">HEIST REPORT · LESSON 3-5 · EVALUATE ALGEBRAIC EXPRESSIONS</div>
       <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">
-        <div><div style="color:var(--muted)">Agent <b style="color:var(--text)">${esc(S.name)}</b> · ${new Date().toLocaleDateString()}</div>
+        <div><div style="color:var(--muted)">${new Date().toLocaleDateString()}</div>
         <div class="rank">${rank[0]} ${rank[1]}</div></div>
         ${newBest?'<div class="stat loot">🏆 New best on this device!</div>':''}
       </div>
@@ -962,7 +960,7 @@ function showReport(){
         <button class="btn ghost" id="home">Home</button><button class="btn" id="again">PLAY AGAIN ▶</button></div>
     </div></div>`;
   confetti(true);SFX.win();
-  $('#again').onclick=()=>startGame(S.name,S.start);
+  $('#again').onclick=()=>startGame(S.start);
   $('#home').onclick=showTitle;
 }
 
